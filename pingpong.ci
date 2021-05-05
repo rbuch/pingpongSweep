@@ -1,68 +1,33 @@
 mainmodule pingpong {
   readonly CProxy_main mainProxy;
-  readonly int iterations;
-  readonly int payload;
+  readonly CProxy_Coordinator coordProxy;
+  readonly CProxy_PingPong pingpongProxy;
+
   mainchare main {
     entry main(CkArgMsg *);
     entry void maindone(void);
   };
+
   message PingMsg{char x[];};
-  message FragMsg{
-    char x[];
-  };
-  message IdMsg;
 
-  array [1D] Ping1 {
-    entry Ping1();
-    entry void start(bool reportTime);
-    entry void recv(PingMsg *);
-    entry [threaded] void trecv(PingMsg *);
+  chare Coordinator {
+    entry Coordinator(int iterations, size_t maxSize);
+    entry void start(void);
+    entry void done(double time);
+    entry void triggerWhenReady(void) {
+      when ready(), ready() serial {
+        pingpongProxy[source].start();
+      }
+    };
 
-    //charm++ zero copy message send api for parameters marked "nocopy"
-    entry void recv_zerocopy(nocopy char msg[size], int size);
-  };        	
-  array [2D] Ping2 {
-    entry Ping2();
-    entry void start(bool reportTime);
-    entry void recv(PingMsg *);
-  };        	
-  array [3D] Ping3 {
-    entry Ping3();
-    entry void start(bool reportTime);
-    entry void recv(PingMsg *);
-  };        	
-  chare PingC {
-    entry PingC(void);
-    entry PingC(IdMsg *);
-    entry void start(bool reportTime);
-    entry void exchange(IdMsg *);
-    entry void recvReuse(PingMsg *);
-    entry void recv(PingMsg *);
-    entry [threaded] void trecv(PingMsg *);
-
-    //charm++ zero copy message send api for parameters marked "nocopy"
-    entry void recv_zerocopy(nocopy char msg[size], int size);
-  };
-  group PingG {
-    entry PingG(void);
-    entry void start(bool reportTime, bool isPipelined, bool copy, bool allocate, int fragSize);
-    entry void recv(PingMsg *);
-
-    //charm++ zero copy message send api for parameters marked "nocopy"
-    entry void recv_zerocopy(nocopy char msg[size], int size);
-    entry void pipelinedRecv(FragMsg *); 
+    entry void ready(void);
   }
-  nodegroup PingN {
-    entry PingN(void);
-    entry void start(bool reportTime);
-    entry void startRDMA(bool reportTime);
-    entry [exclusive] void recv(PingMsg *);
 
-    //charm++ zero copy message send api for parameters marked "nocopy"
-    entry [exclusive] void recv_zerocopy(nocopy char msg[size], int size);
-
-    //charm++ zero copy direct api
-    entry [exclusive] void recvHandle(CkNcpyBuffer destInfo);
-    entry [exclusive] void destRDMACompleted(CkDataMsg *msg);
+  nodegroup PingPong {
+    entry PingPong(void);
+    entry void configSender(int destination, int iterations, size_t size);
+    entry void configReceiver(int source);
+    entry void start(void);
+    entry [exclusive] void recv(PingMsg* msg);
   }
 };

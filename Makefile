@@ -1,5 +1,3 @@
--include ../../common.mk
-SRC=../../../src
 CHARMC?=../../../bin/charmc $(OPTS)
 
 OBJS = pingpong.o
@@ -23,8 +21,5 @@ pingpong.o: pingpong.C cifiles
 	$(CHARMC) -I$(SRC)/conv-core pingpong.C
 
 test: all
-	@echo "Intra-processor Pingpong.."
-	$(call run, ./pingpong +p1 )
-	@echo "Inter-processor Pingpong.."
-	$(call run, ./pingpong +p2 )
+	./charmrun +p2 ./pingpong
 
