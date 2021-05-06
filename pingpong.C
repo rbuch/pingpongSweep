@@ -31,7 +31,7 @@ public:
     if (m->argc > 3)
     {
       CkPrintf(
-          "Usage: pingpong +pN [max_size] [iterations]\n Where N [1-2], max_size (default "
+          "Usage: pingpong +pN [max_size] [iterations]\n Where max_size (default "
           "%d) is integer >0 iterations (default %d) is integer >0 ",
           MAX_SIZE, NITER);
       CkExit(1);
