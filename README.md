@@ -18,3 +18,10 @@ Or, in pseudocode:
             send message of specified size from node_i to node_j and then back to node_i from node_j
           endTimer
           report average roundtrip time, or (endTimer - startTimer) / numIterations
+          
+### Output
+The program outputs the average time in microseconds, parenthetically followed by the message size and the indices of the two nodes involved).
+
+For example, here is the output corresponding to a message payload of size 0 for the ping pong between node 0 and node 1: 
+
+    Avg roundtrip time is 5.423577 us (size 0 (0, 1))
