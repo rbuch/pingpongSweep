@@ -1,5 +1,6 @@
 #include <charm++.h>
 #include <string.h>  // for strlen, and strcmp
+#include <chrono>
 
 #define NITER 10000
 #define MAX_SIZE 1024
@@ -41,6 +42,22 @@ public:
       CkPrintf("Must run with at least two nodes!\n");
       CkExit(2);
     }
+    // write timestamp
+    using std::chrono::system_clock;
+    const time_t now = system_clock::to_time_t(system_clock::now());
+    struct tm currentTime;
+#if defined(_WIN32) || defined(_WIN64)
+    gmtime_s(&currentTime, &now);
+#else
+    gmtime_r(&now, &currentTime);
+#endif
+    CkPrintf("\nStarting run at:\n");
+    char timeBuffer[100];
+    strftime(timeBuffer, sizeof(timeBuffer), "%c %Z", std::localtime(&now));
+    CkPrintf("%s\n", timeBuffer);
+    strftime(timeBuffer, sizeof(timeBuffer), "%FT%TZ", &currentTime);
+    CkPrintf("(ISO 8601: %s)\n\n", timeBuffer);
+
     CkPrintf("Pingpong with maxSize: %zu iterations: %d\n", maxSize, iterations);
     mainProxy = thishandle;
     coordProxy = CProxy_Coordinator::ckNew(iterations, maxSize);
