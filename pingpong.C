@@ -2,6 +2,25 @@
 #include <string.h>  // for strlen, and strcmp
 #include <chrono>
 
+// To get hostname
+#if defined(_WIN32) || defined(_WIN64)
+#  include <Winsock2.h>
+#else
+#  include <unistd.h>
+#  include <limits.h> // For HOST_NAME_MAX
+#endif
+
+#ifndef HOST_NAME_MAX
+// Apple seems to not adhere to POSIX and defines this non-standard variable
+// instead of HOST_NAME_MAX
+#  ifdef MAXHOSTNAMELEN
+#    define HOST_NAME_MAX MAXHOSTNAMELEN
+// Windows docs say 256 bytes (so 255 + 1 added at use) will always be sufficient
+#  else
+#    define HOST_NAME_MAX 255
+#  endif
+#endif
+
 #define NITER 10000
 #define MAX_SIZE 1024
 
@@ -68,7 +87,7 @@ public:
 
   void maindone(void)
   {
-    coordProxy.start();
+    pingpongProxy.getNodeInfo();
   };
 };
 
@@ -80,11 +99,32 @@ class Coordinator : public CBase_Coordinator
   int numNodes;
   int iterations;
   size_t maxSize;
+  std::vector<std::string> nodeHostnames;
+  int numCheckedIn = 0;
 public:
   Coordinator(int iterations, size_t maxSize)
-    : iterations(iterations), maxSize(maxSize), numNodes(CkNumNodes()) {}
+    : iterations(iterations), maxSize(maxSize), numNodes(CkNumNodes())
+  {
+    nodeHostnames.resize(numNodes);
+  }
 
   Coordinator(CkMigrateMessage* m) {}
+
+  void reportNodeInfo(int index, std::string hostname)
+  {
+    nodeHostnames[index] = hostname;
+    numCheckedIn++;
+    if (numCheckedIn == numNodes)
+    {
+      CkPrintf("List of node hostnames:\n");
+      for (int i = 0; i < numNodes; i++)
+      {
+	CkPrintf("%d: %s\n", i, nodeHostnames[i].c_str());
+      }
+      CkPrintf("\n");
+      thisProxy.start();
+    }
+  }
 
   void start()
   {
@@ -136,6 +176,14 @@ private:
 
 public:
   PingPong() {}
+
+  void getNodeInfo()
+  {
+    // Add 1 for null terminator
+    char hostname[HOST_NAME_MAX + 1];
+    gethostname(hostname, HOST_NAME_MAX + 1);
+    coordProxy.reportNodeInfo(thisIndex, std::string(hostname));
+  }
 
   void configSender(int destination, int iterations, size_t size)
   {

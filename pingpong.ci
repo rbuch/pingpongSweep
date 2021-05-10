@@ -14,6 +14,7 @@ mainmodule pingpong {
     entry Coordinator(int iterations, size_t maxSize);
     entry void start(void);
     entry void done(double time);
+    entry void reportNodeInfo(int index, std::string hostname);
     entry void triggerWhenReady(void) {
       when ready(), ready() serial {
         pingpongProxy[source].start();
@@ -25,6 +26,7 @@ mainmodule pingpong {
 
   nodegroup PingPong {
     entry PingPong(void);
+    entry void getNodeInfo(void);
     entry void configSender(int destination, int iterations, size_t size);
     entry void configReceiver(int source);
     entry void start(void);
