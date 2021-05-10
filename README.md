@@ -6,7 +6,7 @@ Does a ping pong test between all pairs of allocated nodes. In general, this sho
 ## Usage
 `./pingpong <upper limit of message size in bytes> <number of iterations>`
 
-For each pair of nodes, sweep through message payload sizes from 0 bytes to the specified upper limit (1,024 bytes by default), doubling each time, and for each size, do the specified number of round trip ping pong iterations, then report the average time each round trip took.
+For each pair of nodes, sweep through message payload sizes from 0 bytes to the specified upper limit (1,024 bytes by default), doubling each time, and for each size, do the specified number of round trip ping pong iterations (10,000 by default), then report the average time each round trip took.
 
 Or, in pseudocode:
 
