@@ -1,7 +1,7 @@
 # pingpongSweep
 Does a ping pong test between all pairs of allocated nodes. In general, this should be run with one task/rank per host so that ping pongs aren't sent between processes on the same physical host.
 
->Note: these are _logical_ nodes from the Charm++ perpspective, which are really processes. When running in SMP mode, one has `+p` / `++ppn` number of nodes. In non-SMP mode, one has `+p` nodes (as each PE is an independent process)).
+>Note: these are _logical_ nodes from the Charm++ perspective, which are really processes. When running in SMP mode, one has `+p` / `++ppn` number of nodes. In non-SMP mode, one has `+p` nodes (as each PE is an independent process)).
 
 ## Usage
 `./pingpong <upper limit of message size in bytes> <number of iterations>`
