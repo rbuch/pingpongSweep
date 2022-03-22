@@ -11,7 +11,7 @@ mainmodule pingpong {
   message PingMsg{char x[];};
 
   chare Coordinator {
-    entry Coordinator(int iterations, size_t maxSize);
+    entry Coordinator(int iterations, int warmUpIterations, size_t maxSize);
     entry void start(void);
     entry void done(double time);
     entry void reportNodeInfo(int index, std::string hostname);
@@ -27,7 +27,7 @@ mainmodule pingpong {
   nodegroup PingPong {
     entry PingPong(void);
     entry void getNodeInfo(void);
-    entry void configSender(int destination, int iterations, size_t size);
+    entry void configSender(int destination, int iterations, int warmUpIterations, size_t size);
     entry void configReceiver(int source);
     entry void start(void);
     entry [exclusive] void recv(PingMsg* msg);

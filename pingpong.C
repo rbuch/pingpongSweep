@@ -22,6 +22,7 @@
 #endif
 
 #define NITER 10000
+#define NWARMUP 100
 #define MAX_SIZE 1024
 
 #include "pingpong.decl.h"
@@ -45,15 +46,17 @@ public:
   main(CkArgMsg* m)
   {
     int iterations = NITER;
+    int warmUpIterations = NWARMUP;
     size_t maxSize = MAX_SIZE;
     if (m->argc > 1) maxSize = atoi(m->argv[1]);
     if (m->argc > 2) iterations = atoi(m->argv[2]);
-    if (m->argc > 3)
+    if (m->argc > 3) warmUpIterations = atoi(m->argv[3]);
+    if (m->argc > 4)
     {
       CkPrintf(
-          "Usage: pingpong +pN [max_size] [iterations]\n Where max_size (default "
-          "%d) is integer >0 iterations (default %d) is integer >0 ",
-          MAX_SIZE, NITER);
+          "Usage: pingpong +pN [max_size] [iterations] [warm_up_iterations] \n Where max_size (default "
+          "%d) is integer >0, iterations (default %d) is integer >0, warm_upiterations (default %d) is integer >0 ",
+          MAX_SIZE, NITER, NWARMUP);
       CkExit(1);
     }
     if (CkNumNodes() < 2)
@@ -77,9 +80,9 @@ public:
     strftime(timeBuffer, sizeof(timeBuffer), "%FT%TZ", &currentTime);
     CkPrintf("(ISO 8601: %s)\n\n", timeBuffer);
 
-    CkPrintf("Pingpong with maxSize: %zu iterations: %d\n", maxSize, iterations);
+    CkPrintf("Pingpong with maxSize: %zu iterations: %d (+ %d warm up)\n", maxSize, iterations, warmUpIterations);
     mainProxy = thishandle;
-    coordProxy = CProxy_Coordinator::ckNew(iterations, maxSize);
+    coordProxy = CProxy_Coordinator::ckNew(iterations, warmUpIterations, maxSize);
     pingpongProxy = CProxy_PingPong::ckNew();
     CkStartQD(CkCallback(CkIndex_main::maindone(), mainProxy));
     delete m;
@@ -98,12 +101,13 @@ class Coordinator : public CBase_Coordinator
   int source = 0, destination = 1;
   int numNodes;
   int iterations;
+  int warmUpIterations;
   size_t maxSize;
   std::vector<std::string> nodeHostnames;
   int numCheckedIn = 0;
 public:
-  Coordinator(int iterations, size_t maxSize)
-    : iterations(iterations), maxSize(maxSize), numNodes(CkNumNodes())
+  Coordinator(int iterations, int warmUpIterations, size_t maxSize)
+    : iterations(iterations), warmUpIterations(warmUpIterations), maxSize(maxSize), numNodes(CkNumNodes())
   {
     nodeHostnames.resize(numNodes);
   }
@@ -128,7 +132,7 @@ public:
 
   void start()
   {
-    pingpongProxy[source].configSender(destination, iterations, size);
+    pingpongProxy[source].configSender(destination, iterations, warmUpIterations, size);
     pingpongProxy[destination].configReceiver(source);
     thisProxy.triggerWhenReady();
   }
@@ -169,6 +173,7 @@ private:
   bool isSender = false;
   int other = 0;
   int iterations = 0;
+  int warmUpIterations = 0;
   int counter = 0;
   size_t size = 0;
 
@@ -185,11 +190,12 @@ public:
     coordProxy.reportNodeInfo(thisIndex, std::string(hostname));
   }
 
-  void configSender(int destination, int iterations, size_t size)
+  void configSender(int destination, int iterations, int warmUpIterations, size_t size)
   {
     isSender = true;
     other = destination;
-    this->iterations = iterations;
+    this->iterations = iterations + warmUpIterations;
+    this->warmUpIterations = warmUpIterations;
     this->counter = 0;
     this->size = size;
     coordProxy.ready();
@@ -204,7 +210,6 @@ public:
 
   void start()
   {
-    start_time = CkWallTimer();
     thisProxy[other].recv(new (size) PingMsg);
   }
 
@@ -213,7 +218,12 @@ public:
     if (isSender)
     {
       counter++;
-      if (counter == iterations)
+      if (counter == warmUpIterations)
+      {
+        start_time = CkWallTimer();
+        thisProxy[other].recv(msg);
+      }
+      else if (counter == iterations)
       {
         end_time = CkWallTimer();
 	const double elapsed = 1.0e6 * (end_time - start_time) / iterations;
