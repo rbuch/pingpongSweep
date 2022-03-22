@@ -1,7 +1,6 @@
 #! /usr/bin/env python
 
 import sys
-import statistics
 
 entries = {}
 
@@ -19,4 +18,5 @@ for filename in sys.argv[1:]:
 
 for time in entries:
     sample = sorted(entries[time])[1:-1]
-    print(time, statistics.mean(sample) / 2)
+    mean = sum(sample) / len(sample)
+    print(time, mean / 2)
