@@ -1,13 +1,13 @@
 #include <charm++.h>
-#include <string.h>  // for strlen, and strcmp
 #include <chrono>
+#include <string.h>  // for strlen, and strcmp
 
 // To get hostname
 #if defined(_WIN32) || defined(_WIN64)
 #  include <Winsock2.h>
 #else
+#  include <limits.h>  // For HOST_NAME_MAX
 #  include <unistd.h>
-#  include <limits.h> // For HOST_NAME_MAX
 #endif
 
 #ifndef HOST_NAME_MAX
@@ -54,8 +54,10 @@ public:
     if (m->argc > 4)
     {
       CkPrintf(
-          "Usage: pingpong +pN [max_size] [iterations] [warm_up_iterations] \n Where max_size (default "
-          "%d) is integer >0, iterations (default %d) is integer >0, warm_upiterations (default %d) is integer >0 ",
+          "Usage: pingpong +pN [max_size] [iterations] [warm_up_iterations] \n Where "
+          "max_size (default "
+          "%d) is integer >0, iterations (default %d) is integer >0, warm_upiterations "
+          "(default %d) is integer >0 ",
           MAX_SIZE, NITER, NWARMUP);
       CkExit(1);
     }
@@ -80,7 +82,8 @@ public:
     strftime(timeBuffer, sizeof(timeBuffer), "%FT%TZ", &currentTime);
     CkPrintf("(ISO 8601: %s)\n\n", timeBuffer);
 
-    CkPrintf("Pingpong with maxSize: %zu iterations: %d (+ %d warm up)\n", maxSize, iterations, warmUpIterations);
+    CkPrintf("Pingpong with maxSize: %zu iterations: %d (+ %d warm up)\n", maxSize,
+             iterations, warmUpIterations);
     mainProxy = thishandle;
     coordProxy = CProxy_Coordinator::ckNew(iterations, warmUpIterations, maxSize);
     pingpongProxy = CProxy_PingPong::ckNew();
@@ -88,15 +91,12 @@ public:
     delete m;
   };
 
-  void maindone(void)
-  {
-    pingpongProxy.getNodeInfo();
-  };
+  void maindone(void) { pingpongProxy.getNodeInfo(); };
 };
 
 class Coordinator : public CBase_Coordinator
 {
-  Coordinator_SDAG_CODE
+  Coordinator_SDAG_CODE;
   size_t size = 0;
   int source = 0, destination = 1;
   int numNodes;
@@ -105,9 +105,13 @@ class Coordinator : public CBase_Coordinator
   size_t maxSize;
   std::vector<std::string> nodeHostnames;
   int numCheckedIn = 0;
+
 public:
   Coordinator(int iterations, int warmUpIterations, size_t maxSize)
-    : iterations(iterations), warmUpIterations(warmUpIterations), maxSize(maxSize), numNodes(CkNumNodes())
+      : iterations(iterations),
+        warmUpIterations(warmUpIterations),
+        maxSize(maxSize),
+        numNodes(CkNumNodes())
   {
     nodeHostnames.resize(numNodes);
   }
@@ -123,7 +127,7 @@ public:
       CkPrintf("List of node hostnames:\n");
       for (int i = 0; i < numNodes; i++)
       {
-	CkPrintf("%d: %s\n", i, nodeHostnames[i].c_str());
+        CkPrintf("%d: %s\n", i, nodeHostnames[i].c_str());
       }
       CkPrintf("\n");
       thisProxy.start();
@@ -139,8 +143,8 @@ public:
 
   void done(double elapsed)
   {
-    CkPrintf("Avg roundtrip time is %lf us (size %zu (%d, %d))\n", elapsed, size,
-	     source, destination);
+    CkPrintf("Avg roundtrip time is %lf us (size %zu (%d, %d))\n", elapsed, size, source,
+             destination);
 
     if (size < maxSize)
     {
@@ -162,7 +166,10 @@ public:
         destination = source + 1;
         thisProxy.start();
       }
-      else { CkExit(); }
+      else
+      {
+        CkExit();
+      }
     }
   }
 };
@@ -208,10 +215,7 @@ public:
     coordProxy.ready();
   }
 
-  void start()
-  {
-    thisProxy[other].recv(new (size) PingMsg);
-  }
+  void start() { thisProxy[other].recv(new (size) PingMsg); }
 
   void recv(PingMsg* msg)
   {
@@ -226,8 +230,8 @@ public:
       else if (counter == iterations)
       {
         end_time = CkWallTimer();
-	const double elapsed = 1.0e6 * (end_time - start_time) / iterations;
-	coordProxy.done(elapsed);
+        const double elapsed = 1.0e6 * (end_time - start_time) / iterations;
+        coordProxy.done(elapsed);
       }
       else
       {
