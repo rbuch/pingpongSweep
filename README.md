@@ -4,9 +4,9 @@ Does a ping pong test between all pairs of allocated nodes. In general, this sho
 >Note: these are _logical_ nodes from the Charm++ perspective, which are really processes. When running in SMP mode, one has `+p` / `++ppn` number of nodes. In non-SMP mode, one has `+p` nodes (as each PE is an independent process)).
 
 ## Usage
-`./pingpong <upper limit of message size in bytes> <number of iterations>`
+`./pingpong <upper limit of message size in bytes> <number of iterations> <number of warmup iterations>`
 
-For each pair of nodes, sweep through message payload sizes from 0 bytes to the specified upper limit (1,024 bytes by default), doubling each time, and for each size, do the specified number of round trip ping pong iterations (10,000 by default), then report the average time each round trip took.
+For each pair of nodes, sweep through message payload sizes from 0 bytes to the specified upper limit (1,024 bytes by default), doubling each time, and for each size, do the specified number of round trip ping pong iterations (10,000 by default plus 100 warmup iterations), then report the average time each round trip took.
 
 Or, in pseudocode:
 
